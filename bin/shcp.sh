@@ -105,8 +105,13 @@ _setup_root() {
     [ ! -e "$www/$u" ] && ln -vs "$w/www" "$www/$u"
   done < <(awk -F':' '{print $1"\n"$6}' /etc/passwd)
 
-  echo "$NGINX_INIT_CMD restart || exit \$?"
-  echo "$PHP_FPM_INIT_CMD restart || exit \$?"
+  echo "if [ -e '$APACHE_HOME' ]; then"
+    echo "$APACHE_CONFIGURE_CMD"
+    echo "  $APACHE_RESTART_CMD || exit \$?"
+  echo fi
+
+  echo "$NGINX_RESTART_CMD || exit \$?"
+  echo "$PHP_FPM_RESTART_CMD || exit \$?"
   echo "$SUPERVISOR_CTL_UPDATE_CMD || exit \$?"
 }
 
