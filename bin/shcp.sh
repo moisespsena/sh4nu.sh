@@ -44,6 +44,23 @@ _setup() {
   echo "[ ! -e '/run/$USER/shcp' ] && mkdir -pv '/run/$USER/shcp' && chown -vR '$USER.$USER' '/run/$USER'"
 }
 
+_user_home() {
+  eval echo ~"$1"
+}
+
+_ls_users() {
+  local u=
+  local h=
+
+  while read u; do
+    read h
+    w="$h/shcp"
+
+    [ ! -e "$w/.env" ] && continue
+    echo "$u"
+  done < <(awk -F':' '{print $1"\n"$6}' /etc/passwd)
+}
+
 _init() {
   export SHCP_HOME="$HOME/shcp"
   [ ! -d "$SCP_HOME" ] && mkdir -pv "$SHCP_HOME" || exit 1
@@ -73,8 +90,8 @@ export SHCP_ROOT=$(cat "$SHCP_HOME/.shcp_root") || exit 1
 . "$SHCP_HOME/env/default.sh"
 ' > .env
 
-  [ ! -e "www/php" ] && (cd www && ln -vs "../../public_html" ./php)
-
+  [ ! -e "www/public_html" ] && (cd www && ln -vs "../../public_html" ./public_html)
+  [ ! -e "www/php" ] && (cd www && ln -vs "public_html" ./php)
   [ ! -e "$HOME/public_html" ] && mkdir -v "$HOME/public_html"
 
   (cd "$RWORK/template" && find . -type f | grep -v '.swp') | while read l; do
@@ -97,13 +114,13 @@ _setup_root() {
   done
 
   while read u; do
-    read h
+    h=$(_user_home "$u")
     w="$h/shcp"
 
     [ ! -e "$w/.env" ] && continue
     su - "$u" -c "$S setup"
     [ ! -e "$www/$u" ] && ln -vs "$w/www" "$www/$u"
-  done < <(awk -F':' '{print $1"\n"$6}' /etc/passwd)
+  done < <(_ls_useres)
 
   echo "if [ -e '$APACHE_HOME' ]; then"
     echo "$APACHE_CONFIGURE_CMD"
@@ -115,13 +132,37 @@ _setup_root() {
   echo "$SUPERVISOR_CTL_UPDATE_CMD || exit \$?"
 }
 
+_init_user() {
+  su - "$1" -c "$S init"
+  return $?
+}
+
 if [ "$1" = 'init' ]; then
   _init
   exit $?
 fi
 
+if [ "$1" = 'update' ]; then
+  while read u; do
+    _init_user "$u"
+  done < <(_ls_users)
+  exit $?
+fi
+
+if [ "$1" = 'ls_users' ]; then
+  if [ "$2" = '--home' ]; then
+    while read u; do
+      echo "$u:"$(_user_home "$u")
+    done < <(_ls_users)
+  else
+    _ls_users
+  fi
+  exit $?
+fi
+
+
 if [ "$1" = 'init_user' ]; then
-  su - "$2" -c "$0 init" 
+  _init_user "$u"
   exit $?
 fi
 
