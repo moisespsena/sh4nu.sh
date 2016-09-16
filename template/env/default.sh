@@ -44,8 +44,16 @@ on_done() {
 
 kill_jobs() {
   for job in $(jobs -p); do
-    kill -s SIGTERM $job > /dev/null 2>&1 || \
+    echo -n "[SHCP] KILL_JOB: killing $job... "
+
+    kill -s SIGTERM $job > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+      echo "killed"
+    else
+      echo "kill failed. Force kill $job job after 10s."
       (sleep 10 && kill -9 $job > /dev/null 2>&1 &)
+    fi
   done
 }
 
