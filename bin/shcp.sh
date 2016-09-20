@@ -113,14 +113,12 @@ _setup_root() {
     . "$l"
   done
 
-  while read u; do
+  _ls_users | while read u; do
     h=$(_user_home "$u")
     w="$h/shcp"
-
-    [ ! -e "$w/.env" ] && continue
-    su - "$u" -c "$S setup"
+    "$S" setup "$u"
     [ ! -e "$www/$u" ] && ln -vs "$w/www" "$www/$u"
-  done < <(_ls_useres)
+  done
 
   echo "if [ -e '$APACHE_HOME' ]; then"
     echo "$APACHE_CONFIGURE_CMD"
@@ -138,6 +136,7 @@ _init_user() {
 }
 
 if [ "$1" = 'init' ]; then
+  [ "$USER" = 'root' ] && echo 'INVALID USER.' && exit 1
   _init
   exit $?
 fi
@@ -162,7 +161,7 @@ fi
 
 
 if [ "$1" = 'init_user' ]; then
-  _init_user "$u"
+  _init_user "$2"
   exit $?
 fi
 
@@ -173,7 +172,12 @@ if [ "$1" = 'setup' ]; then
     . ./.env || exit 1
     _setup
   else
-    _setup_root
+    if [ "$2" != '' ]; then
+      [ "$2" = 'root' ] && echo INVALID USER >&2 && exit 1
+      su - "$2" -c "$S setup"
+    else
+      _setup_root
+    fi
   fi
   exit $?
 fi
