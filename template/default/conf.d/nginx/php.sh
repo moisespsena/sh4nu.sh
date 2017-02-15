@@ -1,7 +1,7 @@
 
 main() {
   local php_uri="$user_uri/php"
-  local php_sock="/run/$user/shcp/php-fpm.sock"
+  local php_sock="/run/$user/snhm/php-fpm.sock"
 
   echo "location $php_uri {"
   echo

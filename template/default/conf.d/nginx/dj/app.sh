@@ -7,7 +7,7 @@ location $app_uri {
   proxy_buffering off;
 
   if ( !-f \$request_filename) {
-    proxy_pass http://unix:/run/$user/shcp/dj-$app-server-main.sock;
+    proxy_pass http://unix:/run/$user/snhm/dj-$app-server-main.sock;
   }
 
   error_page 500 502 503 504 $app_uri/static/500.html;

@@ -1,4 +1,4 @@
-export SHCP_SUPERVISOR_CONF_D="$SHCP_HOME/supervisor.conf.d"
+export SNHM_SUPERVISOR_CONF_D="$SNHM_HOME/supervisor.conf.d"
 
 set_global() {
    local arg="$1"
@@ -8,12 +8,12 @@ EOF
 }
 
 load_env() {
-  var="_shcp_env_loaded_$1"
+  var="_snhm_env_loaded_$1"
   v="${!var}"
 
   if [ "$v" = '' ]; then
-    set_global "_shcp_env_loaded_$1" 1
-    . "$SHCP_HOME/env/$1.sh" || exit 1
+    set_global "_snhm_env_loaded_$1" 1
+    . "$SNHM_HOME/env/$1.sh" || exit 1
   fi
 }
 
@@ -44,7 +44,7 @@ on_done() {
 
 kill_jobs() {
   for job in $(jobs -p); do
-    echo -n "[SHCP] KILL_JOB: killing $job... "
+    echo -n "[SNHM] KILL_JOB: killing $job... "
 
     kill -s SIGTERM $job > /dev/null 2>&1
 
@@ -73,7 +73,7 @@ catch_signals() {
   trap trap_quit EXIT
 }
 
-shcp_exec() {
+snhm_exec() {
   args=( )
 
   while [ "$1" != "" ]; do

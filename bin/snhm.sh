@@ -13,7 +13,7 @@ load_confs () {
 }
 
 _ed() {
-  . "$SHCP_HOME/default/conf.d/$1"
+  . "$SNHM_HOME/default/conf.d/$1"
 }
 
 
@@ -21,27 +21,27 @@ _setup() {
   user="$USER"
   home="$HOME"
 
-  echo "cat > $TMPFILES_D_DIR/shcp-$USER.conf <<'EOF'"
+  echo "cat > $TMPFILES_D_DIR/snhm-$USER.conf <<'EOF'"
   _ed tmpfiles.sh
   load_confs 'tmpfiles.conf.d'
   echo EOF
 
-  echo "cat > $SUPERVISOR_CONF_D_DIR/shcp-$USER.conf <<'EOF'"
+  echo "cat > $SUPERVISOR_CONF_D_DIR/snhm-$USER.conf <<'EOF'"
   _ed supervisor.sh
   load_confs 'supervisor.conf.d'
   echo EOF
 
-  echo "cat > $PHP_FPM_POOL_D_DIR/shcp-$USER.conf <<'EOF'"
+  echo "cat > $PHP_FPM_POOL_D_DIR/snhm-$USER.conf <<'EOF'"
   _ed php-fpm.sh
   load_confs 'php-fpm.conf.d'
   echo EOF
 
-  echo "cat > $NGINX_CONF_DIR/shcp/u/$USER.conf <<'EOF'"
+  echo "cat > $NGINX_CONF_DIR/snhm/u/$USER.conf <<'EOF'"
   _ed nginx.sh
   load_confs 'nginx.conf.d'
   echo EOF
 
-  echo "[ ! -e '/run/$USER/shcp' ] && mkdir -pv '/run/$USER/shcp' && chown -vR '$USER.$USER' '/run/$USER'"
+  echo "[ ! -e '/run/$USER/snhm' ] && mkdir -pv '/run/$USER/snhm' && chown -vR '$USER.$USER' '/run/$USER'"
 }
 
 _user_home() {
@@ -54,7 +54,7 @@ _ls_users() {
 
   while read u; do
     read h
-    w="$h/shcp"
+    w="$h/snhm"
 
     [ ! -e "$w/.env" ] && continue
     echo "$u"
@@ -62,10 +62,10 @@ _ls_users() {
 }
 
 _init() {
-  export SHCP_HOME="$HOME/shcp"
-  [ ! -d "$SCP_HOME" ] && mkdir -pv "$SHCP_HOME" || exit 1
-  cd "$SHCP_HOME"
-  echo "$RWORK" > .shcp_root
+  export SNHM_HOME="$HOME/snhm"
+  [ ! -d "$SCP_HOME" ] && mkdir -pv "$SNHM_HOME" || exit 1
+  cd "$SNHM_HOME"
+  echo "$RWORK" > .snhm_root
   echo 'bin
 log
 default
@@ -81,13 +81,13 @@ supervisor.conf.d/dj
 tmpfiles.d
 env
 www/dj
-' | while read l; do [ "$l" != '' ] && [ ! -e "shcp/$l" ] && mkdir -pv "$l" && touch "$l/.ignore"; done
+' | while read l; do [ "$l" != '' ] && [ ! -e "snhm/$l" ] && mkdir -pv "$l" && touch "$l/.ignore"; done
 
   [ ! -e ".env" ] && echo '
-export SHCP_HOME=$(dirname $(realpath "$BASH_SOURCE")) || exit 1
-export SHCP_ROOT=$(cat "$SHCP_HOME/.shcp_root") || exit 1
-. "$SHCP_ROOT/env.sh"
-. "$SHCP_HOME/env/default.sh"
+export SNHM_HOME=$(dirname $(realpath "$BASH_SOURCE")) || exit 1
+export SNHM_ROOT=$(cat "$SNHM_HOME/.snhm_root") || exit 1
+. "$SNHM_ROOT/env.sh"
+. "$SNHM_HOME/env/default.sh"
 ' > .env
 
   [ ! -e "www/public_html" ] && (cd www && ln -vs "../../public_html" ./public_html)
@@ -107,7 +107,7 @@ _setup_root() {
   www="/var/www/u"
 
   [ ! -e "$www" ] && mkdir -p "$www"
-  [ ! -e "$NGINX_CONF_DIR/shcp/u" ] && mkdir -pv "$NGINX_CONF_DIR/shcp/u"
+  [ ! -e "$NGINX_CONF_DIR/snhm/u" ] && mkdir -pv "$NGINX_CONF_DIR/snhm/u"
 
   (ls "$RWORK/setup.d/"*.sh 2>/dev/null) | while read l; do
     . "$l"
@@ -115,7 +115,7 @@ _setup_root() {
 
   _ls_users | while read u; do
     h=$(_user_home "$u")
-    w="$h/shcp"
+    w="$h/snhm"
     "$S" setup "$u"
     [ ! -e "$www/$u" ] && ln -vs "$w/www" "$www/$u"
   done
@@ -168,7 +168,7 @@ fi
 if [ "$1" = 'setup' ]; then
   if [ "$USER" != 'root' ]; then
     cd ~
-    cd shcp || exit 1
+    cd snhm || exit 1
     . ./.env || exit 1
     _setup
   else

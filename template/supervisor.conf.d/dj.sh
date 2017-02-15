@@ -1,4 +1,4 @@
-dj_apps_d="$SHCP_HOME/python/django-apps"
+dj_apps_d="$SNHM_HOME/python/django-apps"
 dj_apps_conf_d="$dj_apps_d.conf.d"
 
 [ ! -e "$dj_apps_d" ] && exit 0

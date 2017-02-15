@@ -1,9 +1,9 @@
 main() {
   local base_path=$(dirname "$BASH_SOURCE")
 
-(ls -1 "$SHCP_HOME/python/django-apps" 2>/dev/null) | while read app; do
+(ls -1 "$SNHM_HOME/python/django-apps" 2>/dev/null) | while read app; do
   app=$(basename "$app")
-  appconf="$SHCP_HOME/python/django-apps.conf.d/$app"
+  appconf="$SNHM_HOME/python/django-apps.conf.d/$app"
 
 
   ! [ -e "$appconf/server.sh" ] && continue

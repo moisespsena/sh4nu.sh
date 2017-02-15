@@ -1,26 +1,26 @@
 main() {
-  nginx_shcp_site="$NGINX_CONF_DIR/sites-available/shcp-default"
-  echo "[ ! -e '$nginx_shcp_site' ] && cat > '$nginx_shcp_site' <<'EOF'
+  nginx_snhm_site="$NGINX_CONF_DIR/sites-available/snhm-default"
+  echo "[ ! -e '$nginx_snhm_site' ] && cat > '$nginx_snhm_site' <<'EOF'
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
   server_name _;
 
-  include shcp/shcp.conf;
+  include snhm/snhm.conf;
 }
 EOF
 
-cat > $NGINX_CONF_DIR/shcp/shcp.conf <<'EOF'
+cat > $NGINX_CONF_DIR/snhm/snhm.conf <<'EOF'
   root $WWW_DIR;
 
   index index.php index.html index.htm index.nginx-debian.html;
   
   access_log off;
-  error_log  /var/log/nginx/shcp-error.log;
+  error_log  /var/log/nginx/snhm-error.log;
 
   server_name _;
 
-  include shcp/u/*.conf;
+  include snhm/u/*.conf;
 
   charset   utf-8;
 

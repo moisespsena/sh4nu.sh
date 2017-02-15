@@ -16,9 +16,9 @@ fi
 D=$(python -c "import os;print(os.path.dirname(os.path.abspath('$0')))") || exit 1
 . $(dirname "$D")"/.env" || exit 1
 
-appsd="$SHCP_HOME/python/django-apps"
+appsd="$SNHM_HOME/python/django-apps"
 public_dirs="public"
-public_appsd="$SHCP_HOME/www/dj"
+public_appsd="$SNHM_HOME/www/dj"
 dirs="public static"
 
 while read app; do

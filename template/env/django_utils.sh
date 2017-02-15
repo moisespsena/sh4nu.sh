@@ -6,7 +6,7 @@ dj_load() {
     exit 1
   fi
 
-  dj_app_path="$SHCP_HOME/python/django-apps/$dj_app"
+  dj_app_path="$SNHM_HOME/python/django-apps/$dj_app"
 
   [ ! -e "$dj_app_path/manage.py" ] && echo "INVALID APP PATH. The $dj_app_/pathmanage.py file not found." >&2 && exit 1
 
@@ -65,13 +65,13 @@ dj_gun_exec() {
 
   [  "$DJ_NAME" != '' ] && sfx="$DJ_NAME"
 
-  dj_gun_pidf="/run/$USER/shcp/dj-$dj_app-server-$sfx.pid"
-  dj_gun_sockf="/run/$USER/shcp/dj-$dj_app-server-$sfx.sock"
-  main_pidf="/run/$USER/shcp/dj-$dj_app-server-$sfx-main.pid"
+  dj_gun_pidf="/run/$USER/snhm/dj-$dj_app-server-$sfx.pid"
+  dj_gun_sockf="/run/$USER/snhm/dj-$dj_app-server-$sfx.sock"
+  main_pidf="/run/$USER/snhm/dj-$dj_app-server-$sfx-main.pid"
 
   on_done rm -vf "$dj_gun_pidf" "$dj_gun_sockf"
 
-  shcp_exec gunicorn $DJANGO_WSGI_MODULE:application --chdir "$dj_app_path" --pid "$dj_gun_pidf" --name="shcp-dj-$USER-$dj_app" -b "unix://$dj_gun_sockf" --log-level=info --log-file=- "${GUNICORN_ARGS[@]}"
+  snhm_exec gunicorn $DJANGO_WSGI_MODULE:application --chdir "$dj_app_path" --pid "$dj_gun_pidf" --name="snhm-dj-$USER-$dj_app" -b "unix://$dj_gun_sockf" --log-level=info --log-file=- "${GUNICORN_ARGS[@]}"
 }
 
 dj_celery_exec() {
@@ -79,13 +79,13 @@ dj_celery_exec() {
 
   [  "$DJ_NAME" != '' ] && sfx="$DJ_NAME"
 
-  dj_celery_pidf="/run/$USER/shcp/dj-$dj_app-celery-$sfx.pid"
-  main_pidf="/run/$USER/shcp/dj-$dj_app-celery-$sfx-main.pid"
+  dj_celery_pidf="/run/$USER/snhm/dj-$dj_app-celery-$sfx.pid"
+  main_pidf="/run/$USER/snhm/dj-$dj_app-celery-$sfx-main.pid"
 
   cd "$dj_app_path" || exit 1
 
   on_done rm -vf "$dj_celery_pidf"
 
-  shcp_exec celery -A $DJANGO_APP worker -l info "${CELERY_ARGS[@]}"
+  snhm_exec celery -A $DJANGO_APP worker -l info "${CELERY_ARGS[@]}"
 }
 
