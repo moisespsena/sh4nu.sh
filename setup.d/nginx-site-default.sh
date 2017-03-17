@@ -1,6 +1,6 @@
 main() {
   nginx_snhm_site="$NGINX_CONF_DIR/sites-available/snhm-default"
-  echo "[ ! -e '$nginx_snhm_site' ] && cat > '$nginx_snhm_site' <<'EOF'
+echo "[ ! -e '$nginx_snhm_site' ] && cat > '$nginx_snhm_site' <<'EOF'
 server {
   listen 80 default_server;
   listen [::]:80 default_server;
@@ -8,6 +8,17 @@ server {
 
   include snhm/snhm.conf;
 }
+
+server {
+  listen 443 ssl http2 default_server;
+  listen [::]:443 ssl http2 default_server;
+  server_name _;
+  
+  include snhm/ssl.conf;
+  include snhm/ssl-params.conf;
+  include snhm/snhm.conf;
+}
+
 EOF
 
 cat > $NGINX_CONF_DIR/snhm/snhm.conf <<'EOF'
@@ -51,21 +62,7 @@ cat > $NGINX_CONF_DIR/snhm/snhm.conf <<'EOF'
     deny all;
   }
 
-  location /sys/phpMyAdmin {
-    rewrite ^/sys/* /sys/phpmyadmin last;
-  }
-
-  location /sys/pma {
-    rewrite ^/sys/* /sys/phpmyadmin last;
-  }
-
-  location /sys/pga {
-    rewrite ^/sys/* /sys/phppgadmin/index.php last;
-  }
-
   location /sys/ {
-    try_files \$uri $uri/ =404;
-
     location ~ \.php$ {
       try_files \$uri =404;
       fastcgi_pass unix:$PHP_FPM_DEFAULT_SOCK_FILE;
@@ -92,6 +89,48 @@ cat > $NGINX_CONF_DIR/snhm/snhm.conf <<'EOF'
     proxy_pass http://127.0.0.1:$APACHE_DEFAULT_PORT/;
   }
 EOF
+
+
+  certs_dir=$NGINX_CONF_DIR/snhm/certs
+
+  if [ ! -e \$certs_dir ]; then
+    mkdir \$certs_dir || exit $?
+  fi
+
+  if [ ! -e "$NGINX_CONF_DIR/snhm/ssl.conf" ]; then
+    cat > "$NGINX_CONF_DIR/snhm/ssl.conf" <<'EOF'
+ssl_certificate snhm/certs/cert.crt;
+ssl_certificate_key snhm/certs/cert.key;
+EOF
+  fi
+
+  if [ ! -e '$NGINX_CONF_DIR/snhm/ssl-params.conf' ]; then
+    cat > '$NGINX_CONF_DIR/snhm/ssl-params.conf' <<'EOF'
+# https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
+# from https://cipherli.st/
+# and https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
+
+ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+ssl_prefer_server_ciphers on;
+ssl_ciphers \"EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH\";
+ssl_ecdh_curve secp384r1;
+ssl_session_cache shared:SSL:10m;
+ssl_session_tickets off;
+ssl_stapling on;
+ssl_stapling_verify on;
+resolver 8.8.8.8 8.8.4.4 valid=300s;
+resolver_timeout 5s;
+# Disable preloading HSTS for now.  You can use the commented out header line that includes
+# the "preload" directive if you understand the implications.
+# add_header Strict-Transport-Security \"max-age=63072000; includeSubdomains; preload\";
+add_header Strict-Transport-Security \"max-age=63072000; includeSubdomains\";
+add_header X-Frame-Options DENY;
+add_header X-Content-Type-Options nosniff;
+
+ssl_dhparam snhm/certs/dhparam.pem;
+EOF
+fi
+ 
 "
 }
 

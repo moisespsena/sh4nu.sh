@@ -54,7 +54,7 @@ _ls_users() {
 
   while read u; do
     read h
-    w="$h/snhm"
+    w="$h/.snhm"
 
     [ ! -e "$w/.env" ] && continue
     echo "$u"
@@ -62,7 +62,7 @@ _ls_users() {
 }
 
 _init() {
-  export SNHM_HOME="$HOME/snhm"
+  export SNHM_HOME="$HOME/.snhm"
   [ ! -d "$SCP_HOME" ] && mkdir -pv "$SNHM_HOME" || exit 1
   cd "$SNHM_HOME"
   echo "$RWORK" > .snhm_root
@@ -71,7 +71,8 @@ log
 default
 default/conf.d
 default/conf.d/nginx
-default/conf.d/nginx/php
+default/conf.d/nginx/static
+default/conf.d/nginx/public
 default/conf.d/nginx/dj
 nginx.conf.d
 php-fpm-pool.conf.d
@@ -90,9 +91,10 @@ export SNHM_ROOT=$(cat "$SNHM_HOME/.snhm_root") || exit 1
 . "$SNHM_HOME/env/default.sh"
 ' > .env
 
-  [ ! -e "www/public_html" ] && (cd www && ln -vs "../../public_html" ./public_html)
-  [ ! -e "www/php" ] && (cd www && ln -vs "public_html" ./php)
   [ ! -e "$HOME/public_html" ] && mkdir -v "$HOME/public_html"
+  [ ! -e "www/public" ] && (cd www && ln -vs "../../public_html" ./public)
+  (cd www/public && [ ! -e ./static ] && mkdir -v ./static)
+  [ ! -e "www/static" ] && (cd www && ln -vs "./public/static" ./static)
 
   (cd "$RWORK/template" && find . -type f | grep -v '.swp') | while read l; do
     l=${l##./}
@@ -115,8 +117,8 @@ _setup_root() {
 
   _ls_users | while read u; do
     h=$(_user_home "$u")
-    w="$h/snhm"
-    "$S" setup "$u"
+    w="$h/.snhm"
+    "$S" setup-code "$u"
     [ ! -e "$www/$u" ] && ln -vs "$w/www" "$www/$u"
   done
 
@@ -125,9 +127,6 @@ _setup_root() {
     echo "  $APACHE_RESTART_CMD || exit \$?"
   echo fi
 
-  echo "$NGINX_RESTART_CMD || exit \$?"
-  echo "$PHP_FPM_RESTART_CMD || exit \$?"
-  echo "$SUPERVISOR_CTL_UPDATE_CMD || exit \$?"
 }
 
 _init_user() {
@@ -165,19 +164,61 @@ if [ "$1" = 'init_user' ]; then
   exit $?
 fi
 
-if [ "$1" = 'setup' ]; then
+if [ "$1" = 'setup-code' ]; then
   if [ "$USER" != 'root' ]; then
     cd ~
-    cd snhm || exit 1
+    cd .snhm || exit 1
     . ./.env || exit 1
     _setup
   else
     if [ "$2" != '' ]; then
       [ "$2" = 'root' ] && echo INVALID USER >&2 && exit 1
-      su - "$2" -c "$S setup"
+      su - "$2" -c "$S setup-code"
     else
       _setup_root
     fi
   fi
   exit $?
+fi
+
+if [ "$1" = 'setup' ]; then
+  "$0" setup-code | bash
+  exit $?
+fi
+
+if [ "$1" = 'setup-full' ]; then
+  "$0" setup || exit $?
+  "$0" ssl-generate || exit $?
+  "$0" nginx-set-default || exit $?
+  "$0" restart-services || exit $?
+  echo setup full done.
+  exit
+fi
+
+
+
+if [ "$1" = 'ssl-generate' ]; then
+  certs_dir="$NGINX_CONF_DIR/snhm/certs"
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout "$certs_dir/cert.key" -out "$certs_dir/cert.crt" || exit $?
+  openssl dhparam -out "$certs_dir/dhparam.pem" 2048 || exit $?
+  echo done.
+  exit
+fi
+
+if [ "$1" = 'nginx-set-default' ]; then
+    cd "$NGINX_CONF_DIR/sites-enabled" || exit $?
+    rm -v default
+    ln -s ../sites-available/snhm-default ./default
+    ${NGINX_RESTART_CMD[@]}
+    echo done.
+    exit
+fi
+
+if [ "$1" = 'restart-services' ]; then
+    eval "$NGINX_RESTART_CMD" || exit $?
+    eval "$PHP_FPM_RESTART_CMD" || exit $?
+    eval "$SUPERVISOR_CTL_UPDATE_CMD" || exit $?
+
+    echo done.
+    exit
 fi

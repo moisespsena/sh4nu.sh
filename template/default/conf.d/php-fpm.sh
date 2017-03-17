@@ -10,5 +10,5 @@ pm.max_children=5
 pm.start_servers=2
 pm.min_spare_servers=1
 pm.max_spare_servers=3
-chdir=$SNHM_HOME/www/php
+chdir=$SNHM_HOME/www/public
 EOF
