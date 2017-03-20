@@ -77,6 +77,7 @@ default/conf.d/nginx/dj
 nginx.conf.d
 php-fpm-pool.conf.d
 python/django-apps.conf.d
+python/django-apps
 supervisor.conf.d
 supervisor.conf.d/dj
 tmpfiles.d
