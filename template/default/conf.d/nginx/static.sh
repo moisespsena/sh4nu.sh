@@ -19,7 +19,8 @@ main() {
   try_files \$uri \$uri/ =404;
 
   break;
-  }"
+  "
+  echo '}'
 }
 
 main

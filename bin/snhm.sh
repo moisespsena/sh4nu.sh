@@ -85,6 +85,12 @@ env
 www/dj
 ' | while read l; do [ "$l" != '' ] && [ ! -e "snhm/$l" ] && mkdir -pv "$l" && touch "$l/.ignore"; done
 
+  [ ! -e '.gitignore' ] && echo '~*
+*~
+*.swp
+' > .gitignore
+
+
   [ ! -e ".env" ] && echo '
 export SNHM_HOME=$(dirname $(realpath "$BASH_SOURCE")) || exit 1
 export SNHM_ROOT=$(cat "$SNHM_HOME/.snhm_root") || exit 1
@@ -101,6 +107,8 @@ export SNHM_ROOT=$(cat "$SNHM_HOME/.snhm_root") || exit 1
     l=${l##./}
     [ ! -e "$l" ] && ln -vs "$RWORK/template/$l" "$l"
   done
+
+  [ ! -e '.git' ] && git init && git add . && git commit -m "first commit"
 
   return 0
 
@@ -160,7 +168,7 @@ if [ "$1" = 'ls_users' ]; then
 fi
 
 
-if [ "$1" = 'init_user' ]; then
+if [ "$1" = 'init-user' ]; then
   _init_user "$2"
   exit $?
 fi
